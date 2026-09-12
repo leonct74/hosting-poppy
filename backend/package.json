@@ -1,0 +1,21 @@
+{
+  "name": "@hostingpoppy/backend",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "description": "HostingPoppy backend \u2014 creates and removes Amplify Hosting sites through AgentsPoppy-brokered credentials.",
+  "main": "src/server.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-amplify": "^3.700.0",
+    "@aws-sdk/client-route-53": "^3.700.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

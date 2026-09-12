@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+backend/index.cjs
+release/
+# certify writes this, and it carries the AWS account id it ran against. It landed in a
+# commit once (2026-09-12, via `git add -A`) and would have travelled into the next public
+# snapshot. An ignore is the mechanism; remembering to look is not.
+*.cert.json
+.DS_Store

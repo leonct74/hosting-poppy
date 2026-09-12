@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HostingPoppy — dev host</title>
+    <style>
+      body { margin: 0; background: #0e0d0c; color: #e8e6e3; font: 14px system-ui, sans-serif; }
+      header { display: flex; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid #2e2b27; }
+      header b { font-weight: 600; }
+      header span { color: #8b8681; }
+      button { background: #28251f; color: inherit; border: 1px solid #3d3b37; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+      iframe { width: 100%; height: calc(100vh - 42px); border: 0; display: block; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>dev host</b>
+      <span id="log">no calls yet</span>
+      <button id="reset">Reset data</button>
+      <button id="fail">Toggle failures</button>
+      <button id="slow">Toggle slow</button>
+    </header>
+    <iframe id="poppy" src="./index.html"></iframe>
+
+    <script type="module">
+      /**
+       * A stand-in for the AgentsPoppy host, so the real UI can be clicked through without
+       * installing the poppy — AGENTS.md §9 is explicit that reading the code is not the test.
+       *
+       * It mirrors the host in the two ways that matter: the poppy runs in an IFRAME (so
+       * `window.parent` is a different window, exactly as in production), and every privileged
+       * call arrives as a postMessage `{ id, method, params }` answered with
+       * `{ id, ok, result | error }`. The fake data below is deliberately shallow — this proves
+       * the SCREENS work, never that AWS does.
+       */
+      const state = { sites: [], seq: 0, deploys: {}, failing: false, slowMs: 0 };
+      const frame = document.getElementById("poppy");
+      const log = document.getElementById("log");
+      document.getElementById("reset").onclick = () => { state.sites = []; state.deploys = {}; frame.contentWindow.location.reload(); };
+      // Slow mode is not a toy: AGENTS.md §9 says every control must show it is working within
+      // ~100ms, and that rule is untestable against a backend that answers instantly.
+      document.getElementById("slow").onclick = () => { state.slowMs = state.slowMs ? 0 : 2500; log.textContent = state.slowMs ? "answering slowly" : "answering normally"; };
+      document.getElementById("fail").onclick = () => { state.failing = !state.failing; log.textContent = state.failing ? "failing every call" : "answering normally"; };
+
+      const send = (id, ok, payload) =>
+        frame.contentWindow.postMessage(ok ? { id, ok: true, result: payload } : { id, ok: false, error: payload }, "*");
+
+      const site = (id) => state.sites.find((s) => s.id === id);
+
+      function backend({ method, path, body }) {
+        const p = path.split("/").filter(Boolean);
+        const at = (i) => decodeURIComponent(p[i] ?? "");
+        if (method === "GET" && path === "/meta")
+          return { accountId: "123456789012", region: "eu-west-1", version: "0.1.0", regionSupported: true, supportedRegions: ["eu-west-1", "us-east-1"] };
+        if (method === "GET" && path === "/github/setup")
+          return { region: "eu-west-1", appInstallUrl: "https://github.com/apps/aws-amplify-eu-west-1/installations/new" };
+        if (method === "GET" && path === "/sites") return { sites: state.sites };
+        if (method === "POST" && path === "/sites/connect") {
+          // The GitHub path. The dev host does not talk to GitHub or AWS — it only proves the
+          // SCREENS behave, so it accepts any key and reports a repository-backed site.
+          const id = `d${++state.seq}abcdefg`;
+          const s = {
+            id, name: body.name, defaultUrl: `https://${body.branch || "main"}.${id}.amplifyapp.com`,
+            createdAt: new Date().toISOString(), platform: "WEB",
+            source: "github", repository: body.repository, branch: body.branch || "main",
+          };
+          state.sites.push(s);
+          state.deploys["job-1"] = { jobId: "job-1", phase: "running", startedAt: new Date().toISOString(), polls: 0 };
+          return { site: s, jobId: "job-1" };
+        }
+        if (method === "POST" && p[2] === "build") {
+          state.deploys["job-2"] = { jobId: "job-2", phase: "running", startedAt: new Date().toISOString(), polls: 0 };
+          return { jobId: "job-2" };
+        }
+        if (method === "POST" && path === "/sites") {
+          const id = `d${++state.seq}abcdefg`;
+          const s = { id, name: body.name, defaultUrl: `https://main.${id}.amplifyapp.com`, createdAt: new Date().toISOString(), platform: "WEB" };
+          state.sites.push(s);
+          return { site: s };
+        }
+        if (method === "GET" && p[0] === "sites" && p.length === 2) {
+          const s = site(at(1));
+          if (!s) throw new Error("We couldn't find that website.");
+          return { site: s };
+        }
+        if (method === "DELETE" && p[0] === "sites" && p.length === 2) {
+          state.sites = state.sites.filter((s) => s.id !== at(1));
+          return { ok: true };
+        }
+        if (p[2] === "deploy") {
+          if (method === "POST" && p[3] === "begin") return { uploadId: "upload-1" };
+          if (method === "POST" && p[3] === "chunk") return { receivedBytes: (body.dataBase64.length * 3) / 4 };
+          if (method === "POST" && p[3] === "finish") {
+            state.deploys["job-1"] = { jobId: "job-1", phase: "running", startedAt: new Date().toISOString(), polls: 0 };
+            return { jobId: "job-1" };
+          }
+          if (method === "GET") {
+            const d = state.deploys[at(3)] ?? { jobId: at(3), phase: "pending", polls: 0 };
+            d.polls += 1;
+            if (d.polls >= 3) {
+              d.phase = "succeeded";
+              d.finishedAt = new Date().toISOString();
+              const s = site(at(1));
+              if (s) s.lastDeploy = { ...d };
+            }
+            return { deploy: d };
+          }
+        }
+        if (p[2] === "domain") {
+          const s = site(at(1));
+          if (method === "GET") return { domain: s?.domain ?? null };
+          if (method === "POST") {
+            s.domain = {
+              domain: body.address,
+              phase: "verifying",
+              records: [
+                { purpose: "certificate-validation", name: `_a1b2c3.${body.address}`, type: "CNAME", value: "_d4e5f6.acm-validations.aws." },
+                { purpose: "point-your-domain", name: body.address, type: "CNAME", value: "d111111abcdef8.cloudfront.net" },
+              ],
+            };
+            return { domain: s.domain };
+          }
+          if (method === "DELETE") { if (s) delete s.domain; return { ok: true }; }
+        }
+        if (method === "GET" && path === "/resources")
+          return {
+            resources: state.sites.flatMap((s) => [
+              { service: "Amplify Hosting", kind: "Website", name: s.name, consoleUrl: `https://eu-west-1.console.aws.amazon.com/amplify/apps/${s.id}`, siteId: s.id },
+              { service: "Amplify Hosting", kind: "Live branch", name: "main", consoleUrl: `https://eu-west-1.console.aws.amazon.com/amplify/apps/${s.id}/branches/main`, siteId: s.id },
+              ...(s.domain ? [{ service: "Amplify Hosting", kind: "Custom domain", name: s.domain.domain, consoleUrl: "https://eu-west-1.console.aws.amazon.com/amplify", siteId: s.id }] : []),
+            ]),
+            ledger: state.sites.map((s) => ({ at: s.createdAt, action: "created", what: s.name, detail: `Its address is ${s.defaultUrl}` })),
+          };
+        if (method === "POST" && path === "/teardown") {
+          const removed = state.sites.map((s) => s.name);
+          state.sites = [];
+          return { ok: true, removed };
+        }
+        throw new Error(`the dev host has no route for ${method} ${path}`);
+      }
+
+      window.addEventListener("message", (e) => {
+        if (e.source !== frame.contentWindow) return;
+        const { id, method, params } = e.data ?? {};
+        if (typeof id !== "string" || !method) return;
+        log.textContent = `${method}${method === "invokeBackend" ? ` ${params[0].method} ${params[0].path}` : ""}`;
+        if (state.failing && method === "invokeBackend") {
+          // Fail the way the REAL host fails: it flattens a non-2xx backend reply into one
+          // string, `backend NNN: {json}`. A harness that throws a clean sentence instead lets
+          // a screen that prints the raw envelope pass — which is exactly how that defect
+          // survived the first round of tests.
+          return send(
+            id,
+            false,
+            'backend 500: {"message":"AWS is handling a lot of requests right now — wait a moment and try again.","detail":"ThrottlingException: Rate exceeded"}',
+          );
+        }
+        try {
+          if (method === "ensureAccess") return send(id, true, "granted");
+          if (method === "getConnection") return send(id, true, { id: "dev", status: "active", app: { id: "com.hostingpoppy.desktop", name: "HostingPoppy" } });
+          if (method === "openExternal") { window.open(params[0], "_blank", "noopener"); return send(id, true, undefined); }
+          if (method === "notify") return send(id, true, undefined);
+          if (method === "invokeBackend") {
+            const answer = backend(params[0]);
+            if (state.slowMs) return void setTimeout(() => send(id, true, answer), state.slowMs);
+            return send(id, true, answer);
+          }
+          return send(id, false, `the dev host has no method ${method}`);
+        } catch (err) {
+          send(id, false, err instanceof Error ? err.message : String(err));
+        }
+      });
+    </script>
+  </body>
+</html>
