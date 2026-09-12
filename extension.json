@@ -1,0 +1,109 @@
+{
+  "id": "com.hostingpoppy.desktop",
+  "name": "HostingPoppy",
+  "version": "0.1.0",
+  "description": "Put your website online in your own AWS account — connect your GitHub repository so every push goes live, or upload a built site, and point your own domain at it.",
+  "icon": "frontend/hostingpoppy-icon.png",
+  "bugsUrl": "https://github.com/leonct74/hosting-poppy/issues",
+  "permissionSet": {
+    "id": "hostingpoppy-backend",
+    "name": "HostingPoppy backend",
+    "description": "Creates and removes the websites you ask it to host, using AWS Amplify Hosting in your own account: one hosting app per website, its live branch, the builds AWS runs from the GitHub repository you connect, the built sites you upload instead, and the custom domain (with its free certificate) you attach. Connecting a repository asks you for a key you generate on GitHub; it is handed straight to your own AWS account and kept nowhere else. It creates no IAM roles and no storage buckets. Because AWS treats tagging as a separate permission, it can also label Amplify apps — including, in principle, one it did not make, which is the widest thing on this list; HostingPoppy only ever labels what it creates, and its source is open so you can check that. Websites, their branches, and publishing an upload to a branch are limited to ones tagged as HostingPoppy's own, so it cannot touch or publish over a hosting app you or another tool made. Builds, upload staging and domains cannot be limited that way — AWS gives those no tag to check — so those permissions name Amplify apps in general (by AWS's own id pattern, which every Amplify app shares), and HostingPoppy checks a website is its own before it touches it. It can also list your hosting apps, which is how \"Remove everything\" can prove nothing of ours is left behind. To put your own web address in front of a website, it also reads and writes DNS in Route 53, where AWS keeps the domains you host there. It reads the list of your domains to find the one you typed — that read covers the whole list, because AWS gives listing nothing narrower to point at — and then reads the records inside that one domain, so it can tell you what your address points at today BEFORE anything changes, instead of handing you records to paste and hoping. It can then add the one record that points that address at your website, and ask AWS when the change has finished publishing. The permission that writes a record also covers changing and removing one, which is what moving an address onto your website, or taking it back down afterwards, needs; it names your zones by AWS's own id pattern (which every Route 53 zone shares), it reaches only DNS records inside your domains, never a domain itself, and HostingPoppy only ever writes the address you typed, after showing you what is already there. Moving an address that is in use can take a live site down, so it refuses to change any record that points somewhere else until you have said yes to that exact change.",
+    "requiredTags": [
+      "agentspoppy:account",
+      "agentspoppy:app",
+      "agentspoppy:connection"
+    ],
+    "grants": [
+      {
+        "service": "amplify",
+        "actions": [
+          "CreateApp",
+          "CreateBranch",
+          "DeleteApp",
+          "GetApp",
+          "TagResource",
+          "StartDeployment"
+        ],
+        "resourceScope": "tagged-as-self"
+      },
+      {
+        "service": "amplify",
+        "actions": [
+          "CreateDeployment",
+          "StartJob",
+          "GetJob",
+          "ListJobs",
+          "CreateDomainAssociation",
+          "GetDomainAssociation",
+          "DeleteDomainAssociation",
+          "ListDomainAssociations"
+        ],
+        "resourceScope": "arn:aws:amplify:*:*:apps/d*",
+        "reason": "Runs the builds for the websites you asked it to host, stages the files you upload, and attaches or removes the custom domain you chose. AWS gives builds, upload staging and domains no tag to check, so this names Amplify websites by AWS's own id pattern — every Amplify app id starts with a d, so in practice this reaches any Amplify app, and HostingPoppy checks a website is its own before it touches it. Publishing an upload (StartDeployment) is not here: that one AWS can check a tag on, so it sits in the tagged-as-self grant above."
+      },
+      {
+        "service": "amplify",
+        "actions": [
+          "ListApps"
+        ],
+        "resourceScope": "*",
+        "reason": "Lists your hosting apps by name. This is how “Remove everything” can prove nothing of HostingPoppy's was left behind."
+      },
+      {
+        "service": "route53",
+        "actions": [
+          "ListHostedZones",
+          "ListHostedZonesByName"
+        ],
+        "resourceScope": "*",
+        "reason": "Reads the list of domains you keep in Route 53, to find the one you typed. Names only — no records are read here."
+      },
+      {
+        "service": "route53",
+        "actions": [
+          "ListResourceRecordSets",
+          "ChangeResourceRecordSets"
+        ],
+        "resourceScope": "arn:aws:route53:::hostedzone/Z*",
+        "reason": "Shows you what your web address points at today, then writes the one record that points it at your website — and only after you approve that exact change. The zones are named by AWS's own id pattern — every Route 53 zone id starts with a Z, so in practice this reaches any of your domains; HostingPoppy only ever writes or removes the exact record you approved, and never a domain itself."
+      },
+      {
+        "service": "route53",
+        "actions": [
+          "GetChange"
+        ],
+        "resourceScope": "arn:aws:route53:::change/*",
+        "reason": "Asks AWS whether a DNS change has finished publishing, so it can tell you when your address is live instead of leaving you guessing."
+      }
+    ],
+    "limits": null,
+    "network": {
+      "egress": "none",
+      "infrastructure": "websites"
+    }
+  },
+  "frontend": {
+    "entry": "frontend/index.html"
+  },
+  "backend": {
+    "entry": "backend/index.cjs",
+    "transport": "http",
+    "runtime": "node22",
+    "isolation": "strict"
+  },
+  "teardown": {
+    "endpoint": "/teardown"
+  },
+  "capabilities": [
+    "aws:credentials",
+    "connection:read",
+    "backend:invoke",
+    "host:openExternal"
+  ],
+  "compliance": {
+    "dataHandled": "Your website's files and code, hosted only in your own AWS account (Amplify Hosting, Route 53). The one-time GitHub key you paste is handed straight to your own AWS account and kept nowhere else. The developer holds nothing — not your files, not your key, not your visitors' traffic.",
+    "subprocessors": [],
+    "securityContact": "support@agentspoppy.com"
+  }
+}

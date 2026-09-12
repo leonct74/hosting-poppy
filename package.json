@@ -1,0 +1,36 @@
+{
+  "name": "hosting-poppy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Put your website online in your own AWS account \u2014 an AgentsPoppy extension.",
+  "type": "module",
+  "license": "PolyForm-Shield-1.0.0",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "npm run build -w @hostingpoppy/frontend",
+    "build:backend": "node scripts/build-backend.mjs",
+    "validate-manifest": "node scripts/validate-manifest.mjs",
+    "assess-permissions": "node scripts/assess-permissions.mjs",
+    "check": "npm run typecheck && npm run test && npm run validate-manifest && npm run assess-permissions",
+    "sync-feedback": "node ${AGENTSPOPPY_REPO:-../agentspoppy}/scripts/sync-feedback-tab.mjs --dest frontend/src/vendor",
+    "check-feedback": "node ${AGENTSPOPPY_REPO:-../agentspoppy}/scripts/sync-feedback-tab.mjs --dest frontend/src/vendor --check",
+    "pack": "npm run build && node ${AGENTSPOPPY_REPO:-../agentspoppy}/scripts/pack-extension.mjs --src . --frontend frontend/dist",
+    "install-dev": "npm run build && node ${AGENTSPOPPY_REPO:-../agentspoppy}/scripts/install-dev-extension.mjs --src . --frontend frontend/dist --backend backend/index.cjs",
+    "certify": "npm --prefix ${AGENTSPOPPY_REPO:-../agentspoppy} run certify -- --extension $PWD",
+    "rig": "node scripts/rig-boot.mjs",
+    "sync-types": "node scripts/sync-types.mjs",
+    "check-types": "node scripts/sync-types.mjs --check",
+    "pretest": "node scripts/sync-types.mjs --check",
+    "prebuild": "node scripts/sync-types.mjs --check"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0"
+  }
+}

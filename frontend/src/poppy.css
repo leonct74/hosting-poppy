@@ -1,0 +1,73 @@
+/* Copyright 2026 Marco Tomasello (AgentsPoppy) */
+/* SPDX-License-Identifier: LicenseRef-PolyForm-Perimeter-1.0.0 */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   AgentsPoppy poppy design kit — token sheet (v1)
+
+   Derived from the host console's "Warm Graphite & Clay" theme so every poppy
+   reads as a citizen of the same premium console: warm near-black surfaces,
+   ivory text, ONE identity accent per poppy. Import this sheet first and build
+   every colour, font and radius in your UI from these tokens — the full
+   contract lives in DESIGN.md next to this file.
+
+   Deliberately ABSENT from this kit (host-reserved, so users can always tell
+   the host's voice from a poppy's):
+   - Clay (#d97757 family) — the host's own accent: approvals, supervision,
+     brand. A poppy that wears clay is impersonating the console.
+   - Glass (backdrop-filter) — the host's material for chrome that floats
+     ABOVE a poppy (airlock header, approval dialogs). A poppy never floats
+     above itself; use solid scrims from the surface ramp instead.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Warm graphite elevation ramp — page (0) → hover/selected panel (3).
+     Elevation reads by warmth, not hue. */
+  --poppy-surface-0: #0e0d0c;
+  --poppy-surface-1: #171614;
+  --poppy-surface-2: #1f1d1a;
+  --poppy-surface-3: #28251f;
+
+  --poppy-border: #2e2b27;
+  --poppy-border-strong: #3d3b37;
+
+  /* Ivory text over graphite. */
+  --poppy-text: #ece9e2;
+  --poppy-muted: #8f8a80;
+  --poppy-muted-2: #a8a294; /* brighter muted — labels, secondary nav */
+
+  /* YOUR one identity colour — assigned by the host from its fixed palette
+     (deterministic hash of your app id: `poppyAccent(appId)` in the SDK).
+     Override it with your assigned value so the host's sidebar avatar, the
+     airlock header and your own UI all agree on who you are. Primary buttons,
+     active nav, focus rings, links: this — and only this.
+     Default below is the first palette entry; yours is probably different. */
+  --poppy-accent: #9dbbe8;
+  /* Ink for text/icons ON the accent (every assigned accent is a light pastel,
+     so one warm near-black ink works for all of them). */
+  --poppy-on-accent: #14130f;
+
+  /* Status. Red keeps its destructive/critical meaning everywhere. */
+  --poppy-ok: #6fbf8f;
+  --poppy-warn: #e0a23c;
+  --poppy-danger: #e0685a;
+
+  --poppy-radius: 10px;
+
+  /* Native system sans for UI (the biggest "native premium" lever there is);
+     mono for DATA — ids, ARNs, addresses, timestamps, logs. Never other fonts. */
+  --poppy-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter Variable", Roboto, Helvetica, Arial, sans-serif;
+  --poppy-font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   The ONE component class in the kit: the helper-prompt pulse (AGENTS.md §9,
+   REQUIRED on every poppy's primary creation surface). Shared here so every
+   poppy's helper button breathes at the same rhythm, in its own accent — and
+   holds perfectly still for users who asked their OS for reduced motion.
+   ───────────────────────────────────────────────────────────────────────── */
+.poppy-helper-pulse { animation: poppy-helper-pulse 2s ease-out infinite; }
+@keyframes poppy-helper-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--poppy-accent) 55%, transparent); }
+  70% { box-shadow: 0 0 0 11px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .poppy-helper-pulse { animation: none; } }

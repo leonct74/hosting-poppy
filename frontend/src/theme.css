@@ -1,0 +1,226 @@
+/* HostingPoppy theme — the component layer poppy.css deliberately doesn't ship.
+   poppy.css gives tokens (and one animation); everything below is built FROM those
+   tokens. The ONE literal permitted in this file is the accent, because that line is
+   a token definition rather than a use of a colour. */
+:root {
+  /* Assigned accent for com.hostingpoppy.desktop — the same colour the host paints our
+     sidebar avatar with, so the console and this UI agree on who we are. */
+  --poppy-accent: #c9b8e8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--poppy-font);
+  color: var(--poppy-text);
+  background: var(--poppy-surface-0);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── The shell ───────────────────────────────────────────────────────────────
+   Single column, always. The host frame can be a few hundred pixels wide, so a
+   max-width is a ceiling for big windows — never a layout that needs the room. */
+.app { max-width: 760px; margin: 0 auto; padding: 20px 18px 64px; }
+
+/* Icon top-left beside the name — the convention every poppy follows, so the user
+   always knows which app they are inside. */
+.app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.app-header img { width: 34px; height: 34px; border-radius: 9px; }
+.app-header h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+.app-sub { color: var(--poppy-muted); margin: 0 0 20px; font-size: 13px; }
+
+/* ── Type ────────────────────────────────────────────────────────────────── */
+.mono { font-family: var(--poppy-font-mono); }
+.muted { color: var(--poppy-muted); }
+.muted-2 { color: var(--poppy-muted-2); }
+.small { font-size: 13px; }
+h2 { font-size: 17px; font-weight: 620; margin: 0 0 8px; letter-spacing: -0.01em; }
+h3 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+p { margin: 0 0 10px; }
+p:last-child { margin-bottom: 0; }
+
+/* Long addresses and ids must never push the page sideways in a narrow frame. */
+.break { overflow-wrap: anywhere; word-break: break-word; }
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--poppy-surface-1);
+  border: 1px solid var(--poppy-border);
+  border-radius: var(--poppy-radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card-2 { background: var(--poppy-surface-2); }
+/* A card the user is choosing between (S2's "finished site" vs "Next.js app"). */
+.card-choice { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; display: block; }
+.card-choice:hover { border-color: var(--poppy-border-strong); background: var(--poppy-surface-2); }
+.card-choice.selected { border-color: var(--poppy-accent); }
+.section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--poppy-muted-2); margin: 0 0 10px;
+}
+
+/* ── Layout helpers ──────────────────────────────────────────────────────── */
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stack > * + * { margin-top: 10px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  font: inherit; cursor: pointer; border-radius: 8px; padding: 8px 14px;
+  border: 1px solid var(--poppy-border-strong);
+  background: var(--poppy-surface-2); color: var(--poppy-text);
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.btn:hover { background: var(--poppy-surface-3); }
+/* Every async button spends time disabled while it works (AGENTS.md §9), so the
+   disabled look has to read as "working", not as "broken". */
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--poppy-accent); color: var(--poppy-on-accent); border-color: transparent; font-weight: 600; }
+.btn-primary:hover { background: color-mix(in srgb, var(--poppy-accent) 88%, white); }
+.btn-danger { color: var(--poppy-danger); border-color: color-mix(in srgb, var(--poppy-danger) 45%, var(--poppy-border-strong)); }
+.btn-danger:hover { background: color-mix(in srgb, var(--poppy-danger) 16%, var(--poppy-surface-2)); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--poppy-muted-2); padding: 6px 8px; }
+.btn-ghost:hover { background: var(--poppy-surface-2); }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn-lg { padding: 11px 18px; font-size: 15px; }
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+label.field { display: block; margin-bottom: 12px; }
+label.field > span { display: block; font-size: 12px; color: var(--poppy-muted-2); margin-bottom: 5px; }
+.input, .select, textarea.input {
+  width: 100%; font: inherit; color: var(--poppy-text);
+  background: var(--poppy-surface-0); border: 1px solid var(--poppy-border-strong);
+  border-radius: 8px; padding: 8px 10px;
+}
+textarea.input { font-family: var(--poppy-font-mono); font-size: 13px; min-height: 72px; resize: vertical; }
+.input:focus, .select:focus, textarea.input:focus {
+  outline: 2px solid var(--poppy-accent); outline-offset: -1px; border-color: transparent;
+}
+.hint { font-size: 12px; color: var(--poppy-muted); margin-top: 5px; }
+
+/* ── Picking a folder or a .zip ──────────────────────────────────────────── */
+.dropzone {
+  border: 1px dashed var(--poppy-border-strong); border-radius: var(--poppy-radius);
+  background: var(--poppy-surface-1); padding: 26px 18px; text-align: center;
+  cursor: pointer; width: 100%; font: inherit; color: inherit;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.dropzone:hover, .dropzone.over { border-color: var(--poppy-accent); background: var(--poppy-surface-2); }
+
+/* ── Status ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  padding: 2px 9px; border-radius: 999px; border: 1px solid var(--poppy-border-strong);
+  background: var(--poppy-surface-2); color: var(--poppy-muted-2);
+}
+.badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--poppy-muted); }
+.badge.ok { color: var(--poppy-ok); border-color: color-mix(in srgb, var(--poppy-ok) 40%, transparent); }
+.badge.ok .dot { background: var(--poppy-ok); }
+.badge.warn { color: var(--poppy-warn); border-color: color-mix(in srgb, var(--poppy-warn) 40%, transparent); }
+.badge.warn .dot { background: var(--poppy-warn); }
+.badge.bad { color: var(--poppy-danger); border-color: color-mix(in srgb, var(--poppy-danger) 40%, transparent); }
+.badge.bad .dot { background: var(--poppy-danger); }
+.badge.run { color: var(--poppy-accent); border-color: color-mix(in srgb, var(--poppy-accent) 40%, transparent); }
+.badge.run .dot { background: var(--poppy-accent); }
+
+.spinner {
+  width: 14px; height: 14px; border-radius: 50%; display: inline-block;
+  border: 2px solid var(--poppy-border-strong); border-top-color: var(--poppy-accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+/* ── The upload bar ──────────────────────────────────────────────────────── */
+.bar { height: 6px; border-radius: 999px; background: var(--poppy-surface-2); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--poppy-accent); transition: width 200ms ease; }
+
+/* ── The progress list ───────────────────────────────────────────────────────
+   Every multi-minute wait is a checklist with plain labels and an honest time
+   range, never a bare spinner (UX.md ground rule 4). Four states, and a step is
+   only ever in one of them: waiting (default), now, done, failed. */
+.steps { list-style: none; margin: 0; padding: 0; }
+.step { display: flex; gap: 11px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--poppy-border); }
+.step:first-child { border-top: none; padding-top: 0; }
+.step-mark {
+  flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%;
+  border: 2px solid var(--poppy-border-strong); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1; color: var(--poppy-on-accent);
+}
+.step.now .step-mark { border-color: var(--poppy-accent); border-top-color: transparent; animation: spin 0.8s linear infinite; }
+.step.done .step-mark { border-color: transparent; background: var(--poppy-ok); }
+.step.failed .step-mark { border-color: transparent; background: var(--poppy-danger); }
+@media (prefers-reduced-motion: reduce) { .step.now .step-mark { animation-duration: 2.4s; } }
+.step-body { min-width: 0; flex: 1; }
+.step-label { color: var(--poppy-muted-2); }
+.step.now .step-label, .step.done .step-label { color: var(--poppy-text); }
+.step.failed .step-label { color: var(--poppy-danger); }
+/* The honest time range ("usually 2–5 minutes") and, on failure, the one sentence
+   saying what to do next. */
+.step-note { font-size: 12px; color: var(--poppy-muted); margin-top: 2px; }
+
+/* ── The DNS-record table ────────────────────────────────────────────────────
+   Values are long and must be typed EXACTLY at the user's domain provider, so
+   they are monospace, selectable, and never wrapped mid-token: the table scrolls
+   inside its own box rather than squeezing a record into something mistypeable. */
+.dns-wrap { overflow-x: auto; border: 1px solid var(--poppy-border); border-radius: var(--poppy-radius); }
+.dns { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 13px; }
+.dns th {
+  text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--poppy-muted-2); font-weight: 600;
+  padding: 8px 12px; background: var(--poppy-surface-2); border-bottom: 1px solid var(--poppy-border);
+  white-space: nowrap;
+}
+.dns td { padding: 9px 12px; border-bottom: 1px solid var(--poppy-border); vertical-align: top; }
+.dns tr:last-child td { border-bottom: none; }
+.dns td.value { font-family: var(--poppy-font-mono); color: var(--poppy-text); user-select: all; white-space: nowrap; }
+.dns td.purpose { color: var(--poppy-muted); white-space: nowrap; }
+.dns td.act { text-align: right; white-space: nowrap; }
+
+/* ── Inline messages ─────────────────────────────────────────────────────── */
+.banner { border-radius: 8px; padding: 10px 12px; font-size: 13px; border: 1px solid var(--poppy-border); }
+.banner.err { color: var(--poppy-danger); border-color: color-mix(in srgb, var(--poppy-danger) 45%, transparent); background: color-mix(in srgb, var(--poppy-danger) 10%, transparent); }
+.banner.warn { color: var(--poppy-warn); border-color: color-mix(in srgb, var(--poppy-warn) 45%, transparent); background: color-mix(in srgb, var(--poppy-warn) 10%, transparent); }
+.banner.ok { color: var(--poppy-ok); border-color: color-mix(in srgb, var(--poppy-ok) 40%, transparent); background: color-mix(in srgb, var(--poppy-ok) 10%, transparent); }
+.banner.info { color: var(--poppy-muted-2); background: var(--poppy-surface-2); }
+
+/* The raw AWS text every error keeps behind a disclosure — never in the sentence. */
+details.details summary { cursor: pointer; color: var(--poppy-muted); font-size: 12px; }
+details.details pre {
+  font-family: var(--poppy-font-mono); font-size: 12px; color: var(--poppy-muted-2);
+  background: var(--poppy-surface-0); border: 1px solid var(--poppy-border); border-radius: 8px;
+  padding: 10px; margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* ── Overlays. Solid scrim, no backdrop-filter — glass is the host's material. ── */
+.scrim {
+  position: fixed; inset: 0; z-index: 50; padding: 20px;
+  background: color-mix(in srgb, var(--poppy-surface-0) 78%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  background: var(--poppy-surface-1); border: 1px solid var(--poppy-border-strong);
+  border-radius: var(--poppy-radius); padding: 20px; max-width: 460px; width: 100%;
+}
+.chip {
+  font-family: var(--poppy-font-mono); font-size: 12px;
+  background: var(--poppy-surface-0); border: 1px solid var(--poppy-border);
+  border-radius: 6px; padding: 2px 7px;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.tabs { display: inline-flex; gap: 2px; background: var(--poppy-surface-2); border-radius: 8px; padding: 3px; flex-wrap: wrap; }
+.tab { border: none; background: transparent; color: var(--poppy-muted-2); padding: 5px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+.tab.active { background: var(--poppy-surface-0); color: var(--poppy-text); }
+
+/* Loading placeholders that sketch the layout instead of blanking it. */
+.skeleton { background: var(--poppy-surface-2); border-radius: 6px; animation: skeleton-pulse 1.2s ease-in-out infinite; }
+@keyframes skeleton-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
