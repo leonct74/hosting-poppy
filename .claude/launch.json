@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hostingpoppy-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@hostingpoppy/frontend"],
+      "port": 1531
+    }
+  ]
+}
